@@ -171,14 +171,9 @@ if __name__ == '__main__':
         exit(1)
     current_model_name = list(model_dict.keys())[0]
     load_vlm_model(model_dict[current_model_name])##===================================
-    # launch_gradio_server(server_name="0.0.0.0", server_port=8888)
-    launch_gradio_server(server_name="0.0.0.0", server_port=13462)
+    launch_gradio_server(server_name="0.0.0.0", server_port=8888)
 # 3' 启动 WebUI（可选）
 # # ⚠️ 须先将 transformers 格式模型文件夹复制到 ./scripts/ 目录下，web_demo_vlm 脚本会自动扫描该目录下包含权重文件的子文件夹，如不存在则报错
 # cp -r minimind-3v ./scripts/minimind-3v
 # cd scripts && python web_demo_vlm.py##===================================
-
-# http://0.0.0.0:13462/
-
-
 
