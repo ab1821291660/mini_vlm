@@ -21,11 +21,12 @@ def init_model(args):
         )
         state_dict = torch.load(ckp, map_location=args.device)
         model.load_state_dict({k: v for k, v in state_dict.items() if 'mask' not in k}, strict=False)
-    else:
+    else:##hugface格式
         model = AutoModelForCausalLM.from_pretrained(args.load_from, trust_remote_code=True)
-        model.vision_encoder, model.processor = MiniMindVLM.get_vision_model("./model/siglip2-base-p32-256-ve")
-    get_model_params(model, model.config)
-    return model.half().eval().to(args.device), tokenizer, model.processor
+        model.vision_encoder, model.processor = MiniMindVLM.get_vision_model("./model/siglip2-base-p32-256-ve")##===================================
+    get_model_params(model, model.config)##========
+    return model.half().eval().to(args.device), tokenizer, \
+        model.processor
 
 
 def main():
@@ -83,7 +84,8 @@ def main():
                 inputs=inputs["input_ids"], attention_mask=inputs["attention_mask"],
                 max_new_tokens=args.max_new_tokens, do_sample=True, streamer=streamer,
                 pad_token_id=tokenizer.pad_token_id, eos_token_id=tokenizer.eos_token_id,
-                top_p=args.top_p, temperature=args.temperature, pixel_values=pixel_values
+                top_p=args.top_p, temperature=args.temperature,
+                pixel_values=pixel_values##===================================
             )
             gen_tokens = len(generated_ids[0]) - len(inputs["input_ids"][0])
             print(f'\n[Speed]: {gen_tokens / (time.time() - st):.2f} tokens/s\n\n') if args.show_speed else print('\n\n')##[Speed]: 22.00 tokens/s
