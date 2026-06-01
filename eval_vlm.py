@@ -37,7 +37,7 @@ def main():
 
     # parser.add_argument('--load_from', default='model', type=str, help="模型加载路径（model=原生torch权重，其他路径=transformers格式）")#加载原生PyTorch权重
     parser.add_argument('--save_dir', default='out', type=str, help="模型权重目录")
-    parser.add_argument('--weight', default='sft_vlm', type=str, help="权重名称前缀（pretrain_vlm, sft_vlm）")
+    parser.add_argument('--weight', default='sft_vlm', type=str, help="权重名称前缀（pretrain_vlm, sft_vlm）")##===================================##===================================##===================================##===================================
 
 
 
@@ -89,6 +89,9 @@ def main():
             print(f'\n[Speed]: {gen_tokens / (time.time() - st):.2f} tokens/s\n\n') if args.show_speed else print('\n\n')##[Speed]: 22.00 tokens/s
 if __name__ == "__main__":
     main()
+# modelscope download --model gongjy/minimind-3v README.md --local_dir ./minimind-3v  ##===================================
+
+
 # #Model Params: 65.09M
 # [图像]: image-01-golden-dog-balloons.jpg
 # 💬: '<image>\n请描述这张图中的主要物体和场景。'

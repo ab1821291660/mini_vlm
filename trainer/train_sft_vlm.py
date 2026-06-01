@@ -89,8 +89,23 @@ def train_epoch(epoch, loader, iters, start_step=0, wandb=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MiniMind-V SFT")
-    parser.add_argument("--save_dir", type=str, default="../out", help="模型保存目录")
-    parser.add_argument('--save_weight', default='sft_vlm', type=str, help="保存权重的前缀名")
+    parser.add_argument("--save_dir", type=str, default="../out", help="模型保存目录")##===================================
+    parser.add_argument('--save_weight', default='sft_vlm', type=str, help="保存权重的前缀名")##===================================
+
+    parser.add_argument('--use_moe', default=0, type=int, choices=[0, 1], help="是否使用MoE架构（0=否，1=是）")##===================================
+    parser.add_argument("--data_path", type=str, default="../dataset/sft_i2t.parquet", help="训练数据路径")##===================================
+    parser.add_argument('--from_weight', default='pretrain_vlm', type=str, help="基于哪个权重训练，为none则不基于任何权重训练none  llm----pretrain_vlm  sft_vlm")##===================================##===================================
+    parser.add_argument('--from_resume', default=0, type=int, choices=[0, 1], help="是否自动检测&续训（0=否，1=是）")##===================================##===================================
+    ##默认 --freeze_llm 1即训练vision_proj 和LLM 首尾层，保留中间层原有语言能力：
+    parser.add_argument('--freeze_llm', default=1, type=int, choices=[0, 1, 2], help="冻结策略（0=完全可训练，   1=冻结proj+解冻首尾层，   2=完全冻结仅训练proj）")##Visual Encoder一直完全冻结##===================================##===================================
+# ##参数说明：
+# --save_dir: 保存权重的目录
+# --save_weight: 保存权重的前缀名
+#
+# --from_weight: 基础权重名称（none  llm----, pretrain_vlm, sft_vlm等）
+# --from_resume: 是否续训（0=从头开始，1=从检查点继续）
+# --freeze_llm: 冻结策略（0=全参可训，1=proj + LLM 首尾层，2=仅训 proj）。Pretrain 默认 2，SFT 默认 1
+# 更多可直接参考代码
     parser.add_argument("--epochs", type=int, default=2, help="训练轮数")
     parser.add_argument("--batch_size", type=int, default=4, help="batch size")
     parser.add_argument("--learning_rate", type=float, default=5e-6, help="初始学习率")
@@ -104,11 +119,6 @@ if __name__ == "__main__":
     parser.add_argument('--hidden_size', default=768, type=int, help="隐藏层维度")
     parser.add_argument('--num_hidden_layers', default=8, type=int, help="隐藏层数量")
     parser.add_argument('--max_seq_len', default=768, type=int, help="训练的最大截断长度")
-    parser.add_argument('--use_moe', default=0, type=int, choices=[0, 1], help="是否使用MoE架构（0=否，1=是）")
-    parser.add_argument("--data_path", type=str, default="../dataset/sft_i2t.parquet", help="训练数据路径")
-    parser.add_argument('--from_weight', default='pretrain_vlm', type=str, help="基于哪个权重训练，为none则不基于任何权重训练")
-    parser.add_argument('--from_resume', default=0, type=int, choices=[0, 1], help="是否自动检测&续训（0=否，1=是）")
-    parser.add_argument('--freeze_llm', default=1, type=int, choices=[0, 1, 2], help="冻结策略（0=完全可训练，1=冻结+解冻首尾层，2=完全冻结仅训练proj）")
     parser.add_argument("--use_compile", default=0, type=int, choices=[0, 1], help="是否使用torch.compile加速（0=否，1=是）")
     parser.add_argument("--use_wandb", action="store_true", help="是否使用wandb")
     parser.add_argument("--wandb_project", type=str, default="MiniMind-V-SFT", help="wandb项目名")
@@ -177,3 +187,44 @@ if __name__ == "__main__":
     
     # ========== 9. 清理分布进程 ==========
     if dist.is_initialized(): dist.destroy_process_group()
+
+# 开始训练
+# 推荐直接执行 SFT。默认 --freeze_llm 1，即训练 vision_proj 和 LLM 首尾层，保留中间层原有语言能力：
+# python train_sft_vlm.py --epochs 2 --from_weight llm##===================================
+# ##
+#         如果希望让 Projector 先完成一轮图文对齐，再进入 SFT，可额外执行 Pretrain：
+#         python train_pretrain_vlm.py --epochs 2 --from_weight llm##===================================
+#         python train_sft_vlm.py --epochs 2 --from_weight pretrain_vlm##===================================
+#         执行完成后，out/ 下会生成 sft_vlm_*.pth 作为 SFT 权重。
+#
+#
+#         注：训练须知
+#         支持断点续训：添加--from_resume 1参数可从上次中断处继续训练
+#         支持GPU数量变化：续训时GPU数量改变会自动转换step
+#         原子性保存：使用临时文件+替换机制，防止保存过程中断导致权重损坏
+#         每次保存同时生成out/**.pth（模型权重）和checkpoints/**_resume.pth（训练状态）文件
+#         # 训练中断后，使用相同命令并添加 --from_resume 1
+#         python train_sft_vlm.py --epochs 4 --from_resume 1
+# ##参数说明：
+# --save_dir: 保存权重的目录
+# --save_weight: 保存权重的前缀名
+#
+# --from_weight: 基础权重名称（none  llm----, pretrain_vlm, sft_vlm等）
+# --from_resume: 是否续训（0=从头开始，1=从检查点继续）
+# --freeze_llm: 冻结策略（0=全参可训，1=proj + LLM 首尾层，2=仅训 proj）。Pretrain 默认 2，SFT 默认 1
+# 更多可直接参考代码
+
+
+# Tip
+# 训练脚本均为 PyTorch 原生框架，均支持多卡加速，假设你的设备有 N (N＞1) 张显卡：
+# 单机N卡启动训练方式 (DDP, 支持多机多卡集群)
+# torchrun --nproc_per_node N train_xxx.py
+# ##
+# 可根据需要开启wandb记录训练过程
+# # 需要登录: wandb login
+# torchrun --nproc_per_node N train_xxx.py --use_wandb
+# # and
+# python train_xxx.py --use_wandb
+# 通过添加--use_wandb参数，可以记录训练过程，训练完成后，可以在wandb网站上查看训练过程。通过修改wandb_project 和wandb_run_name参数，可以指定项目名称和运行名称。
+#
+
