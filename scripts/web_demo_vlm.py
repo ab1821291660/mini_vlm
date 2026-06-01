@@ -11,7 +11,7 @@ from queue import Queue
 from threading import Thread, Lock
 from PIL import Image
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextStreamer
-from model.model_vlm import MiniMindVLM, VLMConfig##===================================
+from model.model_vlm import MiniMindVLM, VLMConfig##===================================  ##===================================
 from transformers import logging as hf_logging
 
 hf_logging.set_verbosity_error()
@@ -50,7 +50,7 @@ def load_vlm_model(model_path):
         return f"已加载: {current_model_name} ({param_str})"
 
 
-
+def ________():pass
 
 class CustomStreamer(TextStreamer):
     def __init__(self, tokenizer, queue):
@@ -69,7 +69,7 @@ def chat(prompt, current_image_path=None):
     pixel_values = None
     if current_image_path:
         image = Image.open(current_image_path).convert('RGB')
-        pixel_values = {k: v.to(model.device) for k, v in MiniMindVLM.image2tensor(image, preprocess).items()}
+        pixel_values = {k: v.to(model.device) for k, v in MiniMindVLM.image2tensor(image, preprocess).items()}##===================================
         prompt = f'{lm_config.image_special_token * lm_config.image_token_len}\n{prompt}'
     messages = [{"role": "user", "content": prompt}]
 
