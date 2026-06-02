@@ -131,8 +131,8 @@ if __name__ == "__main__":
     
     # ========== 2. 配置目录、模型参数、检查ckp ==========
     os.makedirs(args.save_dir, exist_ok=True)
-    vlm_config = VLMConfig(hidden_size=args.hidden_size, num_hidden_layers=args.num_hidden_layers, max_seq_len=args.max_seq_len, use_moe=bool(args.use_moe))
-    ckp_data = vlm_checkpoint(vlm_config, weight=args.save_weight, save_dir='../checkpoints') if args.from_resume==1 else None
+    vlm_config = VLMConfig(hidden_size=args.hidden_size, num_hidden_layers=args.num_hidden_layers, max_seq_len=args.max_seq_len, use_moe=bool(args.use_moe))##===================================
+    ckp_data = vlm_checkpoint(vlm_config, weight=args.save_weight, save_dir='../checkpoints') if args.from_resume==1 else None##===================================##===================================
     
     # ========== 3. 设置混合精度 ==========
     device_type = "cuda" if "cuda" in args.device else "cpu"
@@ -149,7 +149,7 @@ if __name__ == "__main__":
         wandb.init(project=args.wandb_project, name=wandb_run_name, id=wandb_id, resume=resume)
     
     # ========== 5. 定义模型、数据、优化器 ==========
-    model, tokenizer, preprocess = init_vlm_model(vlm_config, from_weight=args.from_weight, device=args.device, freeze_llm=args.freeze_llm)
+    model, tokenizer, preprocess = init_vlm_model(vlm_config, from_weight=args.from_weight, device=args.device, freeze_llm=args.freeze_llm)##===================================##===================================
     train_ds = VLMDataset(args.data_path, tokenizer, preprocess=preprocess, image_special_token=vlm_config.image_special_token, image_token_len=vlm_config.image_token_len, max_length=vlm_config.max_seq_len)
     train_sampler = DistributedSampler(train_ds) if dist.is_initialized() else None
     scaler = torch.cuda.amp.GradScaler(enabled=(args.dtype == 'float16'))
