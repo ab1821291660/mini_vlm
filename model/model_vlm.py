@@ -101,7 +101,7 @@ class MiniMindVLM(MiniMindForCausalLM):##===================================
 
     def _______llm(self):
         pass
-    def ________all(self):
+    def ________________all(self):
         pass
     def forward(self,
                 input_ids: Optional[torch.Tensor] = None,
@@ -110,7 +110,7 @@ class MiniMindVLM(MiniMindForCausalLM):##===================================
                 use_cache: bool = False,
                 logits_to_keep: Union[int, torch.Tensor] = 0,##========
                 labels: Optional[torch.Tensor] = None,
-                pixel_values: Optional[torch.FloatTensor] = None,
+                pixel_values: Optional[torch.FloatTensor] = None,##===================================
                 **args):
         batch_size, seq_length = input_ids.shape
         if hasattr(past_key_values, 'layers'): past_key_values = None
@@ -197,7 +197,7 @@ class MiniMindVLM(MiniMindForCausalLM):##===================================
 
     def generate(self, *args, num_return_sequences=1, **kwargs):
         if num_return_sequences > 1 and 'pixel_values' in kwargs:
-            pv = kwargs['pixel_values']
+            pv = kwargs['pixel_values']##===================================
             if hasattr(pv, 'keys'):
                 kwargs['pixel_values'] = {k: v.repeat(num_return_sequences, *([1] * (v.ndim - 1))) for k, v in pv.items()}
             else:

@@ -69,7 +69,7 @@ def main():
             image = Image.open(image_path).convert('RGB')
             pixel_values = {k: v.to(args.device) for k, v in MiniMindVLM.image2tensor(image, preprocess).items()}##===================================
             ##
-            messages = [{"role": "user",
+            messages = [{"role": "user",                     ##<|image_pad|>*64image_token_len
                          "content": prompt.replace('<image>', model.config.image_special_token * model.config.image_token_len)}]
             inputs_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, open_thinking=bool(args.open_thinking))
             inputs = tokenizer(inputs_text, return_tensors="pt", truncation=True).to(args.device)
