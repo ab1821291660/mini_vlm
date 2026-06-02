@@ -63,35 +63,40 @@ def setup_seed(seed: int):
     torch.backends.cudnn.benchmark = False
 
 
-def init_vlm_model(vlm_config, from_weight='pretrain_vlm', tokenizer_path='../model', vision_model_path='../model/siglip2-base-p32-256-ve', save_dir='../out', device='cuda', freeze_llm=0):
+def init_vlm_model(vlm_config, from_weight='pretrain_vlm', tokenizer_path='../model', vision_model_path='../model/siglip2-base-p32-256-ve', save_dir='../out', device='cuda',
+                   freeze_llm=0):#1=冻结proj+解冻首尾层
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-    model = MiniMindVLM(vlm_config, vision_model_path=vision_model_path)
-    
+    model = MiniMindVLM(vlm_config, vision_model_path=vision_model_path)##===================================
+
+
     if from_weight != 'none':
         moe_suffix = '_moe' if vlm_config.use_moe else ''
         weight_path = f'{save_dir}/{from_weight}_{vlm_config.hidden_size}{moe_suffix}.pth'
         weights = torch.load(weight_path, map_location=device)
         model.load_state_dict(weights, strict=False)
-    
+
+
     # 1、全部冻结，只打开vision_proj梯度
     for name, param in model.named_parameters():
         if 'vision_proj' not in name:
             param.requires_grad = False
 
+
     # 2、判断策略
     if freeze_llm == 0:
         for name, param in model.named_parameters():
             if 'vision_encoder' not in name:
-                param.requires_grad = True
+                param.requires_grad = True##===================================
     elif freeze_llm == 1:
         last_idx = vlm_config.num_hidden_layers - 1
         for name, param in model.model.named_parameters():
-            if 'layers.0.' in name or f'layers.{last_idx}.' in name:
+            if 'layers.0.' in name or f'layers.{last_idx}.' in name:##===================================
                 param.requires_grad = True
-    elif freeze_llm == 2:
+    elif freeze_llm == 2:##===================================
         pass
 
-    get_model_params(model, vlm_config)
+
+    get_model_params(model, vlm_config)##===================================
     Logger(f'Trainable Params: {sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6:.3f}M')
     preprocess = model.processor
     return model.to(device), tokenizer, preprocess

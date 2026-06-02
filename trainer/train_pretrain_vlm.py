@@ -140,8 +140,16 @@ if __name__ == "__main__":
     
     # ========== 5. 定义模型、数据、优化器 ==========
     model, tokenizer, preprocess = init_vlm_model(vlm_config, from_weight=args.from_weight, device=args.device, freeze_llm=args.freeze_llm)##===================================##===================================
+
+
+
+
     train_ds = VLMDataset(args.data_path, tokenizer, preprocess=preprocess, image_special_token=vlm_config.image_special_token, image_token_len=vlm_config.image_token_len, max_length=vlm_config.max_seq_len)
     train_sampler = DistributedSampler(train_ds) if dist.is_initialized() else None
+
+
+
+
     scaler = torch.cuda.amp.GradScaler(enabled=(args.dtype == 'float16'))
     optimizer = optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=args.learning_rate)
     

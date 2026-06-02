@@ -15,8 +15,8 @@ from torch import optim, nn
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader, DistributedSampler
 from transformers import AutoTokenizer
-from model.model_vlm import MiniMindVLM, VLMConfig
-from dataset.lm_dataset import VLMDataset
+from model.model_vlm import MiniMindVLM, VLMConfig##===================================
+from dataset.lm_dataset import VLMDataset##===================================
 from trainer.trainer_utils import get_lr, Logger, is_main_process, init_distributed_mode, setup_seed, init_vlm_model, vlm_checkpoint, SkipBatchSampler, vlm_collate_fn
 
 warnings.filterwarnings('ignore')
@@ -149,9 +149,17 @@ if __name__ == "__main__":
         wandb.init(project=args.wandb_project, name=wandb_run_name, id=wandb_id, resume=resume)
     
     # ========== 5. 定义模型、数据、优化器 ==========
-    model, tokenizer, preprocess = init_vlm_model(vlm_config, from_weight=args.from_weight, device=args.device, freeze_llm=args.freeze_llm)##===================================##===================================
+    model, tokenizer, preprocess = init_vlm_model(vlm_config, from_weight=args.from_weight, device=args.device, freeze_llm=args.freeze_llm)#1=冻结proj+解冻首尾层##===================================##===================================
+
+
+
+
     train_ds = VLMDataset(args.data_path, tokenizer, preprocess=preprocess, image_special_token=vlm_config.image_special_token, image_token_len=vlm_config.image_token_len, max_length=vlm_config.max_seq_len)
     train_sampler = DistributedSampler(train_ds) if dist.is_initialized() else None
+
+
+
+
     scaler = torch.cuda.amp.GradScaler(enabled=(args.dtype == 'float16'))
     optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate)
     
