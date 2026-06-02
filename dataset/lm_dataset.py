@@ -46,7 +46,7 @@ def post_processing_chat(prompt_content, empty_think_ratio=0.2):
 
 
 class VLMDataset(Dataset):
-    def __init__(self, parquet_path, tokenizer, preprocess=None, max_length=512,    image_special_token='<|image_pad|>', image_token_len=64):
+    def __init__(self, parquet_path, tokenizer, preprocess=None, max_length=512,      image_special_token='<|image_pad|>', image_token_len=64):
         super().__init__()
         self.table = pa.Table.from_batches(pq.ParquetFile(parquet_path).iter_batches())
         self.tokenizer = tokenizer
@@ -62,7 +62,7 @@ class VLMDataset(Dataset):
     def create_chat_prompt(self, conversations):
         messages = []
         for turn in conversations:##'<|image_pad|>'*64##===================================##===================================##===================================##===================================
-            content = turn['content'].replace('<image>', self.image_special_token) if turn.get('role') != 'system' else turn['content']
+            content = turn['content'].replace('<image>', self.image_special_token) if turn.get('role') != 'system'    else turn['content']
             messages.append({"role": turn['role'], "content": content})
         tools = conversations[0]["functions"] if (conversations and conversations[0]["role"] == "system" and conversations[0].get("functions")) else None
         return self.tokenizer.apply_chat_template(
@@ -103,7 +103,8 @@ class VLMDataset(Dataset):
         labels = self.generate_labels(input_ids)##===================================
         ##
         ##
-        image_inputs_list = [MiniMindVLM.image2tensor(Image.open(io.BytesIO(img)), self.preprocess) for img in image_bytes]##===================================
+        image_inputs_list = [MiniMindVLM.image2tensor(Image.open(io.BytesIO(img)),##===================================##===================================
+                                                      self.preprocess) for img in image_bytes]##===================================##===================================
         if hasattr(image_inputs_list[0], 'keys'):
             image_data = {k: torch.cat([inp[k] for inp in image_inputs_list], dim=0) for k in image_inputs_list[0].keys()}
         else:
@@ -114,8 +115,8 @@ class VLMDataset(Dataset):
         #     print(f"{i:3d}: X={self.tokenizer.decode([x])!r:16s} ---> Y={self.tokenizer.decode([input_ids[i+1]])!r:16s} label={y}")
         # # ================
         return torch.tensor(input_ids, dtype=torch.long), \
-            torch.tensor(labels, dtype=torch.long), \
-            image_data
+                            torch.tensor(labels, dtype=torch.long), \
+                            image_data
 
 # 测试parquet数据读取和可视化
 if __name__ == '__main__':

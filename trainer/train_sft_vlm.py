@@ -25,19 +25,25 @@ warnings.filterwarnings('ignore')
 def train_epoch(epoch, loader, iters, start_step=0, wandb=None):
     start_time = time.time()
     last_step = start_step
-    for step, (input_ids, labels, pixel_values) in enumerate(loader, start=start_step + 1):
+    for step, (input_ids, labels, pixel_values) in enumerate(loader, start=start_step + 1):##===================================
         input_ids = input_ids.to(args.device)
         labels = labels.to(args.device)
         pixel_values = {k: v.to(args.device) for k, v in pixel_values.items()} if isinstance(pixel_values, dict) else pixel_values.to(args.device)
+
+
+
         last_step = step
         lr = get_lr(epoch * iters + step, args.epochs * iters, args.learning_rate)
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
 
         with autocast_ctx:
-            res = model(input_ids, labels=labels, pixel_values=pixel_values)
-            loss = res.loss + res.aux_loss
-            loss = loss / args.accumulation_steps
+            res = model(input_ids, labels=labels, pixel_values=pixel_values)##===================================
+
+
+
+            loss = res.loss + res.aux_loss##===================================
+            loss = loss / args.accumulation_steps##===================================
 
         scaler.scale(loss).backward()
 
@@ -52,7 +58,7 @@ def train_epoch(epoch, loader, iters, start_step=0, wandb=None):
 
         if step % args.log_interval == 0 or step == iters:
             spend_time = time.time() - start_time
-            current_loss = loss.item() * args.accumulation_steps
+            current_loss = loss.item() * args.accumulation_steps##===================================
             current_aux_loss = res.aux_loss.item() if res.aux_loss is not None else 0.0
             current_logits_loss = current_loss - current_aux_loss
             current_lr = optimizer.param_groups[-1]['lr']
@@ -153,7 +159,7 @@ if __name__ == "__main__":
 
 
 
-
+                                                                            ##<|image_pad|>*64
     train_ds = VLMDataset(args.data_path, tokenizer, preprocess=preprocess, image_special_token=vlm_config.image_special_token, image_token_len=vlm_config.image_token_len, max_length=vlm_config.max_seq_len)
     train_sampler = DistributedSampler(train_ds) if dist.is_initialized() else None
 
@@ -235,4 +241,11 @@ if __name__ == "__main__":
 # python train_xxx.py --use_wandb
 # 通过添加--use_wandb参数，可以记录训练过程，训练完成后，可以在wandb网站上查看训练过程。通过修改wandb_project 和wandb_run_name参数，可以指定项目名称和运行名称。
 #
+
+##===================================##===================================##===================================##===================================
+##===================================##===================================##===================================##===================================
+##===================================##===================================##===================================##===================================
+##===================================##===================================##===================================##===================================
+# 失败----数据的问题##===================================
+
 

@@ -15,8 +15,8 @@ from torch import optim, nn
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader, DistributedSampler
 from transformers import AutoTokenizer
-from model.model_vlm import MiniMindVLM, VLMConfig
-from dataset.lm_dataset import VLMDataset
+from model.model_vlm import MiniMindVLM, VLMConfig##===================================
+from dataset.lm_dataset import VLMDataset##===================================
 from trainer.trainer_utils import get_lr, Logger, is_main_process, init_distributed_mode, setup_seed, init_vlm_model, vlm_checkpoint, SkipBatchSampler, vlm_collate_fn
 
 warnings.filterwarnings('ignore')
@@ -25,19 +25,25 @@ warnings.filterwarnings('ignore')
 def train_epoch(epoch, loader, iters, start_step=0, wandb=None):
     start_time = time.time()
     last_step = start_step
-    for step, (input_ids, labels, pixel_values) in enumerate(loader, start=start_step + 1):
+    for step, (input_ids, labels, pixel_values) in enumerate(loader, start=start_step + 1):##===================================
         input_ids = input_ids.to(args.device)
         labels = labels.to(args.device)
         pixel_values = {k: v.to(args.device) for k, v in pixel_values.items()} if isinstance(pixel_values, dict) else pixel_values.to(args.device)
+
+
+
         last_step = step
         lr = get_lr(epoch * iters + step, args.epochs * iters, args.learning_rate)
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
 
         with autocast_ctx:
-            res = model(input_ids, labels=labels, pixel_values=pixel_values)
-            loss = res.loss + res.aux_loss
-            loss = loss / args.accumulation_steps
+            res = model(input_ids, labels=labels, pixel_values=pixel_values)##===================================
+
+
+
+            loss = res.loss + res.aux_loss##===================================
+            loss = loss / args.accumulation_steps##===================================
 
         scaler.scale(loss).backward()
 
@@ -52,7 +58,7 @@ def train_epoch(epoch, loader, iters, start_step=0, wandb=None):
 
         if step % args.log_interval == 0 or step == iters:
             spend_time = time.time() - start_time
-            current_loss = loss.item() * args.accumulation_steps
+            current_loss = loss.item() * args.accumulation_steps##===================================
             current_aux_loss = res.aux_loss.item() if res.aux_loss is not None else 0.0
             current_logits_loss = current_loss - current_aux_loss
             current_lr = optimizer.param_groups[-1]['lr']
