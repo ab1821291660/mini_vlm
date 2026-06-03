@@ -1,7 +1,7 @@
 import os
 import torch
 import warnings
-from .model_minimind import *
+from .model_minimind import * ##===================================
 from typing import Optional, Tuple, List, Union
 from torch import nn
 from transformers import SiglipImageProcessor, SiglipVisionModel
@@ -56,6 +56,10 @@ class MiniMindVLM(MiniMindForCausalLM):##===================================
         for param in model.parameters():
             param.requires_grad = False##===================================
         return model.eval(), processor
+    def ________________allmodel(self):
+        pass
+
+
 
     @staticmethod
     def image2tensor(image, processor):##在lm_dataset.py中调用了，已处理
