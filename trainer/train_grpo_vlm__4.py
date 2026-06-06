@@ -679,7 +679,8 @@ def train_one_epoch(
 
 def main():
     parser = argparse.ArgumentParser(description="MiniMind-V GRPO training (teaching & minimal)")
-    parser.add_argument("--data_dir", type=str, default="../dataset/RL_Innovator-VL", help="RL_Innovator-VL directory")
+    # parser.add_argument("--data_dir", type=str, default="../dataset/RL_Innovator-VL", help="RL_Innovator-VL directory")
+    parser.add_argument("--data_dir", type=str, default="../dataset/cot_reasoning[jinin25]__distill__Innovator-VL-RL-172K", help="RL_Innovator-VL directory")
     parser.add_argument("--save_dir", type=str, default="../outown", help="Path to save merged model weights")
     parser.add_argument("--checkpoint_dir", type=str, default="../checkpoints", help="Path to save resume checkpoint")
     parser.add_argument("--save_weight", type=str, default="grpo_vlm", help="Checkpoint weight prefix")
@@ -727,8 +728,8 @@ def main():
     parser.add_argument("--save_interval", type=int, default=200)
     parser.add_argument("--seed", type=int, default=42)
 
-    parser.add_argument("--init_ckpt", type=str, default="../checkpoints/cot_vlm_768.pth", help="Initial SFT/VLM checkpoint")
-    parser.add_argument("--from_resume", type=int, default=0, choices=[0, 1], help="Resume from --save_weight checkpoint")
+    parser.add_argument("--init_ckpt", type=str, default="../checkpoints/cot_vlm_768.pth", help="Initial SFT/VLM checkpoint")##===================================##===================================
+    parser.add_argument("--from_resume", type=int, default=0, choices=[0, 1], help="Resume from --save_weight checkpoint")##===================================##===================================
     parser.add_argument("--use_compile", type=int, default=0, choices=[0, 1])
     parser.add_argument("--use_wandb", action="store_true")
     parser.add_argument("--wandb_project", type=str, default="MiniMind-VLM-GRPO")

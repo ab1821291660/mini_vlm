@@ -91,8 +91,6 @@ def train_epoch(epoch, loader, iters, start_step=0, wandb=None):
         scaler.step(optimizer)
         scaler.update()
         optimizer.zero_grad(set_to_none=True)
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MiniMind-V SFT")
     parser.add_argument("--save_dir", type=str, default="../outown", help="模型保存目录")##===================================
@@ -126,7 +124,9 @@ if __name__ == "__main__":
     parser.add_argument('--hidden_size', default=768, type=int, help="隐藏层维度")
     parser.add_argument('--num_hidden_layers', default=8, type=int, help="隐藏层数量")
     parser.add_argument('--max_seq_len', default=768, type=int, help="训练的最大截断长度")
+    # parser.add_argument('--max_seq_len', default=1536, type=int, help="训练的最大截断长度")##===================================
     parser.add_argument("--use_compile", default=0, type=int, choices=[0, 1], help="是否使用torch.compile加速（0=否，1=是）")
+
     parser.add_argument("--use_wandb", action="store_true", help="是否使用wandb")
     parser.add_argument("--wandb_project", type=str, default="MiniMind-V-SFT", help="wandb项目名")
     args = parser.parse_args()
@@ -153,13 +153,14 @@ if __name__ == "__main__":
         resume = 'must' if wandb_id else None
         wandb_run_name = f"MiniMind-V-SFT-Epoch-{args.epochs}-BatchSize-{args.batch_size}-LearningRate-{args.learning_rate}"
         wandb.init(project=args.wandb_project, name=wandb_run_name, id=wandb_id, resume=resume)
-    
+
+    # 注意：init_vlm_model 默认从 ../out 加载权重；这里将 save_dir 显式传入，保持与你的命令一致
     # ========== 5. 定义模型、数据、优化器 ==========
     model, tokenizer, preprocess = init_vlm_model(vlm_config, from_weight=args.from_weight, device=args.device, freeze_llm=args.freeze_llm)#1=冻结proj+解冻首尾层##===================================##===================================
 
 
 
-                                                                            ##<|image_pad|>*64
+    ##<|image_pad|>*64
     train_ds = VLMDataset(args.data_path, tokenizer, preprocess=preprocess, image_special_token=vlm_config.image_special_token, image_token_len=vlm_config.image_token_len, max_length=vlm_config.max_seq_len)
     train_sampler = DistributedSampler(train_ds) if dist.is_initialized() else None
 
@@ -201,6 +202,16 @@ if __name__ == "__main__":
     
     # ========== 9. 清理分布进程 ==========
     if dist.is_initialized(): dist.destroy_process_group()
+# Model Params: 65.09M
+# Trainable Params: 15.932M
+# Epoch:[1/1](100/788), loss: 2.2624, logits_loss: 2.2624, aux_loss: 0.0000, lr: 0.00000482, epoch_time: 4.0min
+# Epoch:[1/1](200/788), loss: 2.0617, logits_loss: 2.0617, aux_loss: 0.0000, lr: 0.00000432, epoch_time: 2.0min
+# Epoch:[1/1](300/788), loss: 2.0753, logits_loss: 2.0753, aux_loss: 0.0000, lr: 0.00000357, epoch_time: 1.0min
+# Epoch:[1/1](400/788), loss: 1.9648, logits_loss: 1.9648, aux_loss: 0.0000, lr: 0.00000270, epoch_time: 1.0min
+# Epoch:[1/1](500/788), loss: 2.0491, logits_loss: 2.0491, aux_loss: 0.0000, lr: 0.00000183, epoch_time: 0.0min
+
+
+
 
 # 开始训练
 # 推荐直接执行 SFT。默认 --freeze_llm 1，即训练 vision_proj 和 LLM 首尾层，保留中间层原有语言能力：
@@ -246,6 +257,6 @@ if __name__ == "__main__":
 ##===================================##===================================##===================================##===================================
 ##===================================##===================================##===================================##===================================
 ##===================================##===================================##===================================##===================================
-# 失败----数据的问题##===================================
+
 
 

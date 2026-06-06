@@ -67,6 +67,8 @@ def main():
 
     streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
     # 自动测试image_dir中的所有图像
+    # prompt = "仔细看一下这张图：\n\n<image>\n\n描述一下这个图像的内容。"
+    # prompt = "你好好看看这个图片\n\n<image>\n\n告诉我这个图片讲了什么内容。"
     prompt = "<image>\n请描述这张图中的主要物体和场景。"
     # prompt = "<image>\nPlease illustrate the image through your words."
     for image_file in sorted(os.listdir(args.image_dir)):
@@ -81,7 +83,7 @@ def main():
             inputs_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, open_thinking=bool(args.open_thinking))
             inputs = tokenizer(inputs_text, return_tensors="pt", truncation=True).to(args.device)
             print(f'[图像]: {image_file}')
-            print(f"💬: {repr(prompt)}")
+            print(f"💬: {repr(prompt)}")#print(prompt.replace('\n', '\\n'))
 
 
 

@@ -75,6 +75,17 @@ class MiniMindVLM(MiniMindForCausalLM):
 
 
 
+                    # @staticmethod
+                    # def image2tensor(image, processor):
+                    #     if image.mode in ['RGBA', 'LA']: image = image.convert('RGB')
+                    #     inputs = processor(images=image, return_tensors="pt")['pixel_values']
+                    #     return inputs
+                    # @staticmethod
+                    # def get_image_embeddings(image_tensors, vision_model):
+                    #     with torch.no_grad():
+                    #         outputs = vision_model.vision_model(pixel_values=image_tensors)
+                    #     img_embedding = outputs.last_hidden_state[:, 1:, :].squeeze()
+                    #     return img_embedding
     @staticmethod
     def image2tensor(image, processor):##在lm_dataset.py中调用了，已处理
         if image.mode in ['RGBA', 'LA']: image = image.convert('RGB')

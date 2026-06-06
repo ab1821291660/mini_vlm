@@ -48,7 +48,22 @@ def load_vlm_model(model_path):
         param_str = f'{sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6:.2f}M'
         print(f'已加载 {current_model_name}，参数量：{param_str}')
         return f"已加载: {current_model_name} ({param_str})"
-
+# def init_model(lm_config):
+#     tokenizer = AutoTokenizer.from_pretrained(args.load_from)
+#     if 'model' in args.load_from:
+#         moe_path = '_moe' if lm_config.use_moe else ''
+#         ckp = f'../{args.save_dir}/{args.weight}_{lm_config.hidden_size}{moe_path}.pth'
+#         model = MiniMindVLM(lm_config, vision_model_path="../model/vision_model/clip-vit-base-patch16")
+#         state_dict = torch.load(ckp, map_location=args.device)
+#         model.load_state_dict({k: v for k, v in state_dict.items() if 'mask' not in k}, strict=False)
+#     else:
+#         model = AutoModelForCausalLM.from_pretrained(args.load_from, trust_remote_code=True)
+#         model.vision_encoder, model.processor = MiniMindVLM.get_vision_model("../model/vision_model/clip-vit-base-patch16")
+#
+#     print(f'VLM参数量：{sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6:.3f} 百万')
+#     vision_model, preprocess = model.vision_encoder, model.processor
+#     return (model.eval().to(args.device), tokenizer, vision_model.to(args.device),
+#             preprocess)
 
 def ________():pass
 class CustomStreamer(TextStreamer):

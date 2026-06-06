@@ -19,6 +19,9 @@ def preview_parquet_data(input_parquet, n=3):
 
     n = min(n, total_rows)
     for i in range(n):
+        print(table[i])##===================================
+
+
         print(f"=== 第 {i+1} 条数据 ===")
         # 读取并解析 conversations
         conv_raw = table['conversations'][i].as_py()##===================================
@@ -105,13 +108,16 @@ def extract_top_k_data(input_parquet, output_parquet, k=100):
     # print(f"新文件已保存至: {output_parquet}")
 if __name__ == '__main__':
     input_file = './sft_i2t.parquet'##===================================
-    # input_file = './vlm_reasoning_2149_grpo.parquet'
-    # output_file = '/home/bnw/WJS/pretrain/minimind-v/dataset/sft_cold_start_i2t_5000.parquet'
+    ## input_file = './vlm_reasoning_2149_grpo.parquet'
+    ## output_file = '/home/bnw/WJS/pretrain/minimind-v/dataset/sft_cold_start_i2t_5000.parquet'
     output_file = './sft_i2t_mini1000.parquet'##===================================
+    ##
+    input_file = './Innovator-VL-RL-172K_RL_part000006.parquet'#数据集总条数: 8698##===================================
+    output_file = './Innovator-VL-RL-172K_RL_part000006_mini1000.parquet'##===================================
     ##
     ##
     # preview_parquet_data(input_file, n=3)#10#可以修改n的值来查看更多条目##===================================
-    extract_top_k_data(input_file, output_file, k=1000)##===================================
+    extract_top_k_data(input_file, output_file, k=20)##1000##===================================
 
 
 

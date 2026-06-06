@@ -865,7 +865,7 @@ if __name__ == "__main__":
 
 
     parser.add_argument('--use_moe', default=0, type=int, choices=[0, 1], help="是否使用MoE架构")##===================================
-    parser.add_argument("--data_path", type=str, default="../dataset/vlm_reasoning_2149_grpo.parquet", help="训练数据路径")##===================================
+    parser.add_argument("--data_path", type=str, default="../dataset/cot_reasoning[JinshengWei]__Minimind-v-RL-thinking/vlm_reasoning_2149_grpo.parquet", help="训练数据路径")##===================================
     parser.add_argument('--from_weight', default='cot_sft', type=str, help="基于哪个权重训练")##===================================##===================================
     parser.add_argument('--from_resume', default=0, type=int, choices=[0, 1], help="是否自动检测&续训")##===================================##===================================
     ##默认 --freeze_llm 1即训练vision_proj 和LLM 首尾层，保留中间层原有语言能力：
