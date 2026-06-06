@@ -48,7 +48,8 @@ def post_processing_chat(prompt_content, empty_think_ratio=0.2):
 class VLMDataset(Dataset):
     def __init__(self, parquet_path, tokenizer, preprocess=None, max_length=512,      image_special_token='<|image_pad|>', image_token_len=64):
         super().__init__()
-        self.table = pa.Table.from_batches(pq.ParquetFile(parquet_path).iter_batches())
+        # self.table = pa.Table.from_batches(pq.ParquetFile(parquet_path).iter_batches())##===================================##===================================##===================================##===================================
+        self.table = pa.Table.from_batches(pq.ParquetFile(parquet_path).iter_batches())[:20]
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.preprocess = preprocess
@@ -64,7 +65,7 @@ class VLMDataset(Dataset):
         for turn in conversations:##'<|image_pad|>'*64##===================================##===================================##===================================##===================================
             content = turn['content'].replace('<image>', self.image_special_token) if turn.get('role') != 'system'    else turn['content']
             messages.append({"role": turn['role'], "content": content})
-        tools = conversations[0]["functions"] if (conversations and conversations[0]["role"] == "system" and conversations[0].get("functions")) else None
+        tools = conversations[0]["functions"] if (conversations and conversations[0]["role"] == "system" and conversations[0].get("functions")) else None##===================================
         return self.tokenizer.apply_chat_template(
             messages,
             tokenize=False,
@@ -95,9 +96,9 @@ class VLMDataset(Dataset):
 
 
 
-        conversations = pre_processing_chat(conversations)##===================================
+        conversations = pre_processing_chat(conversations)
         prompt = self.create_chat_prompt(conversations)##===================================##===================================
-        prompt = post_processing_chat(prompt)##===================================
+        prompt = post_processing_chat(prompt)
         input_ids = self.tokenizer(prompt).input_ids[:self.max_length]
         input_ids += [self.tokenizer.pad_token_id] * (self.max_length - len(input_ids))
         labels = self.generate_labels(input_ids)##===================================
@@ -122,10 +123,12 @@ class VLMDataset(Dataset):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt; plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei']
     for path in ['pretrain_i2t.parquet', 'sft_i2t.parquet']:
+        # t = pa.Table.from_batches(pq.ParquetFile(path).iter_batches()); fig, ax = plt.subplots(1, 5, figsize=(20, 4))
         pf = pq.ParquetFile(path); n = pf.num_row_groups; t = pa.concat_tables([pf.read_row_group(i * n // 5).slice(0, 1) for i in range(5)]); fig, ax = plt.subplots(1, 5, figsize=(20, 4))
         for i in range(5):
             img_data = t['image_bytes'][i].as_py(); img_data = img_data[0] if isinstance(img_data, list) else img_data
             ax[i].imshow(Image.open(io.BytesIO(img_data))); ax[i].axis('off')
             ax[i].set_title(json.loads(t['conversations'][i].as_py())[1]['content'][:30], fontsize=8)
+        # out = path.replace('.parquet', '_preview.png'); plt.savefig(out); print(f'已保存{out}, 共{len(t)}条')
         out = path.replace('.parquet', '_preview.png'); plt.savefig(out); print(f'已保存{out}, 共{pf.metadata.num_rows}条')
 

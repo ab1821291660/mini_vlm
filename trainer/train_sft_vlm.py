@@ -95,11 +95,12 @@ def train_epoch(epoch, loader, iters, start_step=0, wandb=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MiniMind-V SFT")
-    parser.add_argument("--save_dir", type=str, default="../out", help="模型保存目录")##===================================
+    parser.add_argument("--save_dir", type=str, default="../outown", help="模型保存目录")##===================================
     parser.add_argument('--save_weight', default='sft_vlm', type=str, help="保存权重的前缀名")##===================================
 
     parser.add_argument('--use_moe', default=0, type=int, choices=[0, 1], help="是否使用MoE架构（0=否，1=是）")##===================================
-    parser.add_argument("--data_path", type=str, default="../dataset/sft_i2t.parquet", help="训练数据路径")##===================================
+    # parser.add_argument("--data_path", type=str, default="../dataset/sft_i2t.parquet", help="训练数据路径")##===================================
+    parser.add_argument("--data_path", type=str, default="../dataset/sft_i2t_mini1000.parquet", help="训练数据路径")##===================================
     parser.add_argument('--from_weight', default='pretrain_vlm', type=str, help="基于哪个权重训练，为none则不基于任何权重训练none  llm----pretrain_vlm  sft_vlm")##===================================##===================================
     parser.add_argument('--from_resume', default=0, type=int, choices=[0, 1], help="是否自动检测&续训（0=否，1=是）")##===================================##===================================
     ##默认 --freeze_llm 1即训练vision_proj 和LLM 首尾层，保留中间层原有语言能力：
@@ -129,7 +130,6 @@ if __name__ == "__main__":
     parser.add_argument("--use_wandb", action="store_true", help="是否使用wandb")
     parser.add_argument("--wandb_project", type=str, default="MiniMind-V-SFT", help="wandb项目名")
     args = parser.parse_args()
-
     # ========== 1. 初始化环境和随机种子 ==========
     local_rank = init_distributed_mode()
     if dist.is_initialized(): args.device = f"cuda:{local_rank}"

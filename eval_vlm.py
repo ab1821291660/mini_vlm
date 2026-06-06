@@ -1,6 +1,7 @@
 import time
 import argparse
 import os
+import re
 import warnings
 import torch
 import random
@@ -9,6 +10,9 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, TextStreamer
 from model.model_vlm import MiniMindVLM, VLMConfig
 from trainer.trainer_utils import setup_seed, get_model_params
 warnings.filterwarnings('ignore')
+
+
+
 
 def init_model(args):
     tokenizer = AutoTokenizer.from_pretrained(args.load_from, trust_remote_code=True)
@@ -52,7 +56,10 @@ def main():
     parser.add_argument('--show_speed', default=1, type=int, help="显示decode速度（tokens/s）")
     parser.add_argument('--device', default='cuda' if torch.cuda.is_available() else 'cpu', type=str, help="运行设备")
     # parser.add_argument('--open_thinking', default=0, type=int, help="是否开启自适应思考（0=否，1=是）")##===================================##===================================##===================================##===================================
-    parser.add_argument('--open_thinking', default=1, type=int, help="是否开启自适应思考（0=否，1=是）")##===================================##===================================##===================================##===================================
+    parser.add_argument('--open_thinking',
+                        default=1,
+                        type=int,
+                        help="是否开启自适应思考（0=否，1=是）")##===================================##===================================##===================================##===================================
     args = parser.parse_args()
     model, tokenizer, preprocess = init_model(args)##===================================
 

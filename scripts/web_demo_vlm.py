@@ -11,7 +11,7 @@ from queue import Queue
 from threading import Thread, Lock
 from PIL import Image
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextStreamer
-from model.model_vlm import MiniMindVLM, VLMConfig##===================================  ##===================================
+from model.model_vlm import MiniMindVLM, VLMConfig
 from transformers import logging as hf_logging
 
 hf_logging.set_verbosity_error()
@@ -51,7 +51,6 @@ def load_vlm_model(model_path):
 
 
 def ________():pass
-
 class CustomStreamer(TextStreamer):
     def __init__(self, tokenizer, queue):
         super().__init__(tokenizer, skip_prompt=True, skip_special_tokens=True)
@@ -155,6 +154,7 @@ def launch_gradio_server(server_name="0.0.0.0", server_port=7788):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Chat with MiniMind-V")
     parser.add_argument('--load_from', default='./', type=str, help="transformers模型扫描目录")##===================================
+    # parser.add_argument('--vision_model', default='../model/siglip2-base-p16-ve', type=str, help="视觉编码器路径")
     parser.add_argument('--vision_model', default='../model/siglip2-base-p32-256-ve', type=str, help="视觉编码器路径")##===================================
     parser.add_argument('--temperature', default=0.7, type=float, help="生成温度")
     parser.add_argument('--top_p', default=0.95, type=float, help="nucleus采样阈值")

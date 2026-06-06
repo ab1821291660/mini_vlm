@@ -91,15 +91,64 @@ def train_epoch(epoch, loader, iters, start_step=0, wandb=None):
         scaler.step(optimizer)
         scaler.update()
         optimizer.zero_grad(set_to_none=True)
-
-
+# #训练
+# 本项目训练流程分为两步：SFT 冷启动 → GRPO 强化学习。
+# 1) SFT 冷启动（Supervised Fine-Tuning）
+# 使用监督数据对模型进行冷启动，得到后续 GRPO 的初始化权重：
+# python train_sft_vlm.py \
+#   --epochs 1 \
+#   --from_weight sft_vlm \
+#   --save_weight reasoning_sft1 \
+#   --data_path dataset/train_data/vlm_reasoning_3149_train.parquet \
+#   --save_dir ../out_vlm_reasoning \
+#   --use_wandb \
+#   --wandb_project vlm_reasoning
+#
+# 2) GRPO 训练（Reinforcement Learning）
+# 在 SFT 权重基础上进行 GRPO 强化学习训练：
+# python train_grpo_vlm.py \
+#   --save_dir ../out_vlm_reasoning \
+#   --save_weight reasoning_grpo \
+#   --epochs 1 \
+#   --batch_size 1 \
+#   --learning_rate 5e-6 \
+#   --data_path dataset/train_data/vlm_reasoning_2149_grpo.parquet \
+#   --from_weight reasoning_sft1 \
+#   --num_samples 4 \
+#   --temperature 0.65 \
+#   --top_p 0.85 \
+#   --accumulation_steps 1 \
+#   --log_interval 20 \
+#   --save_interval 1000 \
+#   --use_wandb \
+#   --wandb_project vlm_reasoning_GRPO_v1
+#
+# 3) 直接下载已训练模型（可选）
+# 如果不想本地训练，可以直接下载已训练好的 SFT / GRPO 权重：
+# https://huggingface.co/JinshengWei/Minimind-v-RL/tree/main
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="MiniMind-V Pretrain")##===================================
+    parser = argparse.ArgumentParser(description="MiniMind-V SFT")
     parser.add_argument("--save_dir", type=str, default="../outown", help="模型保存目录")##===================================
-    parser.add_argument('--save_weight', default='pretrain_vlm', type=str, help="保存权重的前缀名")
+    parser.add_argument('--save_weight', default='cot_sft', type=str, help="保存权重的前缀名")##===================================
+
+    parser.add_argument('--use_moe', default=0, type=int, choices=[0, 1], help="是否使用MoE架构（0=否，1=是）")##===================================
+    # parser.add_argument("--data_path", type=str, default="../dataset/sft_i2t.parquet", help="训练数据路径")##===================================
+    parser.add_argument("--data_path", type=str, default="../dataset/vlm_reasoning_3149_train.parquet", help="训练数据路径")##===================================
+    parser.add_argument('--from_weight', default='sft_vlm', type=str, help="基于哪个权重训练，为none则不基于任何权重训练none  llm----pretrain_vlm  sft_vlm")##===================================##===================================
+    parser.add_argument('--from_resume', default=0, type=int, choices=[0, 1], help="是否自动检测&续训（0=否，1=是）")##===================================##===================================
+    ##默认 --freeze_llm 1即训练vision_proj 和LLM 首尾层，保留中间层原有语言能力：
+    parser.add_argument('--freeze_llm', default=1, type=int, choices=[0, 1, 2], help="冻结策略（0=完全可训练，   1=冻结proj+解冻首尾层，   2=完全冻结仅训练proj）")##Visual Encoder一直完全冻结##===================================##===================================
+# ##参数说明：
+# --save_dir: 保存权重的目录
+# --save_weight: 保存权重的前缀名
+#
+# --from_weight: 基础权重名称（none  llm----, pretrain_vlm, sft_vlm等）
+# --from_resume: 是否续训（0=从头开始，1=从检查点继续）
+# --freeze_llm: 冻结策略（0=全参可训，1=proj + LLM 首尾层，2=仅训 proj）。Pretrain 默认 2，SFT 默认 1
+# 更多可直接参考代码
     parser.add_argument("--epochs", type=int, default=2, help="训练轮数")
-    parser.add_argument("--batch_size", type=int, default=16, help="batch size")
-    parser.add_argument("--learning_rate", type=float, default=4e-4, help="初始学习率")
+    parser.add_argument("--batch_size", type=int, default=4, help="batch size")
+    parser.add_argument("--learning_rate", type=float, default=5e-6, help="初始学习率")
     parser.add_argument("--device", type=str, default="cuda:0" if torch.cuda.is_available() else "cpu", help="训练设备")
     parser.add_argument("--dtype", type=str, default="bfloat16", help="混合精度类型")
     parser.add_argument("--num_workers", type=int, default=2, help="数据加载线程数")
@@ -109,17 +158,13 @@ if __name__ == "__main__":
     parser.add_argument("--save_interval", type=int, default=1000, help="模型保存间隔")
     parser.add_argument('--hidden_size', default=768, type=int, help="隐藏层维度")
     parser.add_argument('--num_hidden_layers', default=8, type=int, help="隐藏层数量")
-    parser.add_argument('--max_seq_len', default=450, type=int, help="训练的最大截断长度")
-    parser.add_argument('--use_moe', default=0, type=int, choices=[0, 1], help="是否使用MoE架构（0=否，1=是）")##===================================
-    parser.add_argument("--data_path", type=str, default="../dataset/pretrain_i2t.parquet", help="训练数据路径")##===================================
-    parser.add_argument('--from_weight', default='llm', type=str, help="基于哪个权重训练，为none 则不基于任何权重训练")##===================================##===================================
-    parser.add_argument('--from_resume', default=0, type=int, choices=[0, 1], help="是否自动检测&续训（0=否，1=是）")##===================================##===================================
-    parser.add_argument('--freeze_llm', default=2, type=int, choices=[0, 1, 2], help="冻结策略（0=完全可训练，1=冻结+解冻首尾层，2=完全冻结仅训练proj）")##===================================##===================================
+    # parser.add_argument('--max_seq_len', default=768, type=int, help="训练的最大截断长度")
+    parser.add_argument('--max_seq_len', default=1536, type=int, help="训练的最大截断长度")##===================================
     parser.add_argument("--use_compile", default=0, type=int, choices=[0, 1], help="是否使用torch.compile加速（0=否，1=是）")
-    parser.add_argument("--use_wandb", action="store_true", help="是否使用wandb")
-    parser.add_argument("--wandb_project", type=str, default="MiniMind-V-Pretrain", help="wandb项目名")
-    args = parser.parse_args()
 
+    parser.add_argument("--use_wandb", action="store_true", help="是否使用wandb")
+    parser.add_argument("--wandb_project", type=str, default="MiniMind-V-SFT", help="wandb项目名")
+    args = parser.parse_args()
     # ========== 1. 初始化环境和随机种子 ==========
     local_rank = init_distributed_mode()
     if dist.is_initialized(): args.device = f"cuda:{local_rank}"
@@ -141,15 +186,16 @@ if __name__ == "__main__":
         import swanlab as wandb
         wandb_id = ckp_data.get('wandb_id') if ckp_data else None
         resume = 'must' if wandb_id else None
-        wandb_run_name = f"MiniMind-V-Pretrain-Epoch-{args.epochs}-BatchSize-{args.batch_size}-LearningRate-{args.learning_rate}"
+        wandb_run_name = f"MiniMind-V-SFT-Epoch-{args.epochs}-BatchSize-{args.batch_size}-LearningRate-{args.learning_rate}"
         wandb.init(project=args.wandb_project, name=wandb_run_name, id=wandb_id, resume=resume)
-    
+
+    # 注意：init_vlm_model 默认从 ../out 加载权重；这里将 save_dir 显式传入，保持与你的命令一致
     # ========== 5. 定义模型、数据、优化器 ==========
-    model, tokenizer, preprocess = init_vlm_model(vlm_config, from_weight=args.from_weight, device=args.device, freeze_llm=args.freeze_llm)##===================================##===================================
+    model, tokenizer, preprocess = init_vlm_model(vlm_config, from_weight=args.from_weight, device=args.device, freeze_llm=args.freeze_llm)#1=冻结proj+解冻首尾层##===================================##===================================
 
 
 
-
+    ##<|image_pad|>*64
     train_ds = VLMDataset(args.data_path, tokenizer, preprocess=preprocess, image_special_token=vlm_config.image_special_token, image_token_len=vlm_config.image_token_len, max_length=vlm_config.max_seq_len)
     train_sampler = DistributedSampler(train_ds) if dist.is_initialized() else None
 
@@ -157,7 +203,7 @@ if __name__ == "__main__":
 
 
     scaler = torch.cuda.amp.GradScaler(enabled=(args.dtype == 'float16'))
-    optimizer = optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=args.learning_rate)
+    optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate)
     
     # ========== 6. 从ckp恢复状态 ==========
     start_epoch, start_step = 0, 0
@@ -191,3 +237,61 @@ if __name__ == "__main__":
     
     # ========== 9. 清理分布进程 ==========
     if dist.is_initialized(): dist.destroy_process_group()
+# Model Params: 65.09M
+# Trainable Params: 15.932M
+# Epoch:[1/1](100/788), loss: 2.2624, logits_loss: 2.2624, aux_loss: 0.0000, lr: 0.00000482, epoch_time: 4.0min
+# Epoch:[1/1](200/788), loss: 2.0617, logits_loss: 2.0617, aux_loss: 0.0000, lr: 0.00000432, epoch_time: 2.0min
+# Epoch:[1/1](300/788), loss: 2.0753, logits_loss: 2.0753, aux_loss: 0.0000, lr: 0.00000357, epoch_time: 1.0min
+# Epoch:[1/1](400/788), loss: 1.9648, logits_loss: 1.9648, aux_loss: 0.0000, lr: 0.00000270, epoch_time: 1.0min
+# Epoch:[1/1](500/788), loss: 2.0491, logits_loss: 2.0491, aux_loss: 0.0000, lr: 0.00000183, epoch_time: 0.0min
+
+
+
+
+# 开始训练
+# 推荐直接执行 SFT。默认 --freeze_llm 1，即训练 vision_proj 和 LLM 首尾层，保留中间层原有语言能力：
+# python train_sft_vlm.py --epochs 2 --from_weight llm##===================================
+# ##
+#         如果希望让 Projector 先完成一轮图文对齐，再进入 SFT，可额外执行 Pretrain：
+#         python train_pretrain_vlm.py --epochs 2 --from_weight llm##===================================
+#         python train_sft_vlm.py --epochs 2 --from_weight pretrain_vlm##===================================
+#         执行完成后，out/ 下会生成 sft_vlm_*.pth 作为 SFT 权重。
+#
+#
+#         注：训练须知
+#         支持断点续训：添加--from_resume 1参数可从上次中断处继续训练
+#         支持GPU数量变化：续训时GPU数量改变会自动转换step
+#         原子性保存：使用临时文件+替换机制，防止保存过程中断导致权重损坏
+#         每次保存同时生成out/**.pth（模型权重）和checkpoints/**_resume.pth（训练状态）文件
+#         # 训练中断后，使用相同命令并添加 --from_resume 1
+#         python train_sft_vlm.py --epochs 4 --from_resume 1
+# ##参数说明：
+# --save_dir: 保存权重的目录
+# --save_weight: 保存权重的前缀名
+#
+# --from_weight: 基础权重名称（none  llm----, pretrain_vlm, sft_vlm等）
+# --from_resume: 是否续训（0=从头开始，1=从检查点继续）
+# --freeze_llm: 冻结策略（0=全参可训，1=proj + LLM 首尾层，2=仅训 proj）。Pretrain 默认 2，SFT 默认 1
+# 更多可直接参考代码
+
+
+# Tip
+# 训练脚本均为 PyTorch 原生框架，均支持多卡加速，假设你的设备有 N (N＞1) 张显卡：
+# 单机N卡启动训练方式 (DDP, 支持多机多卡集群)
+# torchrun --nproc_per_node N train_xxx.py
+# ##
+# 可根据需要开启wandb记录训练过程
+# # 需要登录: wandb login
+# torchrun --nproc_per_node N train_xxx.py --use_wandb
+# # and
+# python train_xxx.py --use_wandb
+# 通过添加--use_wandb参数，可以记录训练过程，训练完成后，可以在wandb网站上查看训练过程。通过修改wandb_project 和wandb_run_name参数，可以指定项目名称和运行名称。
+#
+
+##===================================##===================================##===================================##===================================
+##===================================##===================================##===================================##===================================
+##===================================##===================================##===================================##===================================
+##===================================##===================================##===================================##===================================
+# 失败----数据的问题##===================================
+
+

@@ -19,8 +19,8 @@ class MiniMindConfig(PretrainedConfig):
         self.bos_token_id = kwargs.get("bos_token_id", 1)
         self.eos_token_id = kwargs.get("eos_token_id", 2)
         self.flash_attn = kwargs.get("flash_attn", True)
-        self.num_attention_heads = kwargs.get("num_attention_heads", 8)
-        self.num_key_value_heads = kwargs.get("num_key_value_heads", 4)
+        self.num_attention_heads = kwargs.get("num_attention_heads", 8)##===================================
+        self.num_key_value_heads = kwargs.get("num_key_value_heads", 4)##===================================
         self.head_dim = kwargs.get("head_dim", self.hidden_size // self.num_attention_heads)
         self.hidden_act = kwargs.get("hidden_act", 'silu')
         self.intermediate_size = kwargs.get("intermediate_size", math.ceil(hidden_size * math.pi / 64) * 64)
@@ -29,7 +29,7 @@ class MiniMindConfig(PretrainedConfig):
         self.rope_theta = kwargs.get("rope_theta", 1e6)
         self.tie_word_embeddings = kwargs.get("tie_word_embeddings", True)
         self.inference_rope_scaling = kwargs.get("inference_rope_scaling", False)
-        self.rope_scaling = {
+        self.rope_scaling = {##===================================##===================================##===================================##===================================
             "beta_fast": 32,
             "beta_slow": 1,
             "factor": 16,
@@ -269,7 +269,7 @@ class MiniMindForCausalLM(PreTrainedModel, GenerationMixin):
 
 
             attention_mask = torch.cat([attention_mask, attention_mask.new_ones(attention_mask.shape[0], 1)], -1) if attention_mask is not None else None
-            logits = outputs.logits[:, -1, :] / temperature
+            logits = outputs.logits[:, -1, :] / temperature#1-166-6400----#1-6400
             if repetition_penalty != 1.0:
                 for i in range(input_ids.shape[0]):
                     seen = torch.unique(input_ids[i]); score = logits[i, seen]; logits[i, seen] = torch.where(score > 0, score / repetition_penalty, score * repetition_penalty)
@@ -280,10 +280,11 @@ class MiniMindForCausalLM(PreTrainedModel, GenerationMixin):
                 mask = torch.cumsum(torch.softmax(sorted_logits, dim=-1), dim=-1) > top_p
                 mask[..., 1:], mask[..., 0] = mask[..., :-1].clone(), 0
                 logits[mask.scatter(1, sorted_indices, mask)] = -float('inf')
-            next_token = torch.multinomial(torch.softmax(logits, dim=-1), num_samples=1) if do_sample else torch.argmax(logits, dim=-1, keepdim=True)
-            if eos_token_id is not None: next_token = torch.where(finished.unsqueeze(-1), next_token.new_full((next_token.shape[0], 1), eos_token_id), next_token)
-            input_ids = torch.cat([input_ids, next_token], dim=-1)
-            past_key_values = outputs.past_key_values if use_cache else None
+            next_token = torch.multinomial(torch.softmax(logits, dim=-1), num_samples=1) if do_sample else torch.argmax(logits, dim=-1, keepdim=True)#1-1
+            if eos_token_id is not None: next_token = torch.where(finished.unsqueeze(-1), next_token.new_full((next_token.shape[0], 1), eos_token_id), next_token)#1-1
+            ##
+            input_ids = torch.cat([input_ids, next_token], dim=-1)#1-167##===================================
+            past_key_values = outputs.past_key_values if use_cache    else None #8个的【（1-166-4-96），（1-166-4-96）】##===================================
             if streamer: streamer.put(next_token.cpu())
             if eos_token_id is not None:
                 finished |= next_token.squeeze(-1).eq(eos_token_id)

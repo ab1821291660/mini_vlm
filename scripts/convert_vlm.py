@@ -8,7 +8,7 @@ import torch
 import transformers
 import warnings
 from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaConfig, LlamaForCausalLM
-from model.model_vlm import MiniMindVLM, VLMConfig##===================================  ##===================================
+from model.model_vlm import MiniMindVLM, VLMConfig
 
 warnings.filterwarnings('ignore', category=UserWarning)
 
@@ -29,6 +29,8 @@ def convert_torch2transformers_minimind(torch_path, transformers_path, dtype=tor
     lm_model.save_pretrained(transformers_path, safe_serialization=False)##===================================
     tokenizer = AutoTokenizer.from_pretrained('../model/')
     tokenizer.save_pretrained(transformers_path)##===================================
+    ##
+    print(f"模型已保存为 Transformers-MiniMind-V 格式: {transformers_path}")
     # 显式写入 tie_word_embeddings（save_pretrained 默认不序列化与默认值相同的字段）
     config_path = os.path.join(transformers_path, "config.json")
     config = json.load(open(config_path, 'r', encoding='utf-8'))
